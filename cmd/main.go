@@ -32,4 +32,5 @@ func main() {
 	if err != nil {
 		log.Fatal("Fatalny błąd...")
 	}
+	log.Fatal("Ensure that it really runs this code xD ")
 }
