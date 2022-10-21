@@ -1,36 +1,14 @@
 package main
 
 import (
-	"fmt"
+	checker "github.com/wzslr321/cc-checker-go/src"
 	"log"
-	"os"
-	"path/filepath"
 )
 
-func listFiles() ([]string, error) {
-	workingDirectory := os.Getenv("INPUT_WORKING_DIRECTORY")
-
-	fileList := []string{}
-	err := filepath.Walk(fmt.Sprintf("./%s", workingDirectory), func(path string, f os.FileInfo, err error) error {
-		if doesFileMatch(path) {
-			fileList = append(fileList, path)
-		}
-		return nil
-	})
-	return fileList, err
-}
-
-func doesFileMatch(path string) bool {
-	if file, err := os.Stat(path); err == nil && !file.IsDir() {
-		return true
-	}
-	return false
-}
-
 func main() {
-	_, err := listFiles()
+	err := checker.CheckFiles()
+
 	if err != nil {
-		log.Fatal("Fatalny błąd...")
+		log.Fatalf("Error: %s", err)
 	}
-	log.Fatal("Ensure that it really runs this code xD ")
 }
