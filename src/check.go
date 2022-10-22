@@ -21,10 +21,32 @@ func (e *ccError) Error() string {
 	return fmt.Sprintf("Maximum complexity reached in file %s at line %d\n CC score: %d", e.filePath, e.line, e.ccScore)
 }
 
-func CheckFiles() error {
-	err := walkThroughFiles()
+func CheckFiles(dir string) error {
+	if dir == "" {
+		dir = cnf.WorkDir
+	}
+
+	files, err := os.ReadDir(dir)
 	if err != nil {
-		log.Fatalf("Maximum complexity reached: %s", err)
+		return err
+	}
+
+	for _, file := range files {
+		filePath := dir + "/" + file.Name()
+		if !file.IsDir() {
+			if isFileExcluded(file.Name()) {
+				continue
+			}
+			err := scanFile(filePath)
+			if err != nil {
+				log.Fatalf("Maximum complexity reached: \n%s", err)
+			}
+		} else {
+			err := CheckFiles(filePath)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -33,7 +55,7 @@ func CheckFiles() error {
 func scanFile(filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
-		// do sth
+		return err
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
@@ -46,7 +68,7 @@ func scanFile(filePath string) error {
 		if scanningFunc && len(lineStr) > 4 {
 			if lineStr[0:4] == "func" {
 				scanningFunc = false
-				cc, _ := checkFunctionComplexity(currentFunc)
+				cc, _ := getFunctionComplexity(currentFunc)
 				if cc > cnf.MaxComplexity {
 					return &ccError{filePath: filePath, line: line, ccScore: cc}
 				}
@@ -64,7 +86,7 @@ func scanFile(filePath string) error {
 		line++
 	}
 	if len(currentFunc) > 0 {
-		cc, _ := checkFunctionComplexity(currentFunc)
+		cc, _ := getFunctionComplexity(currentFunc)
 		if cc > cnf.MaxComplexity {
 			return &ccError{filePath: filePath, line: line, ccScore: cc}
 		}
@@ -73,29 +95,19 @@ func scanFile(filePath string) error {
 	return nil
 }
 
-func checkFunctionComplexity(function string) (int, error) {
+func getFunctionComplexity(function string) (int, error) {
 	fmt.Printf("Checking function: %s\n", function)
+	// it should probably contain some real functionality 🌚
 
 	return 0, nil
 }
 
-func walkThroughFiles() error {
-	if isFileExcluded() {
-		return nil
-	}
-
-	err := scanFile("test.txt")
-	if err != nil {
-		log.Fatalf("Maximum complexity reached: \n%s", err)
-	}
-
-	return nil
-}
-
-func isFileExcluded() bool {
-	_, err := regexp.Compile("foo")
-	if err != nil {
-		return false
+func isFileExcluded(filename string) bool {
+	for _, pattern := range cnf.ExcludePatterns {
+		match, _ := regexp.MatchString(pattern, filename)
+		if match {
+			return true
+		}
 	}
 
 	return false

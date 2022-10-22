@@ -6,8 +6,7 @@ import (
 )
 
 func main() {
-	err := checker.CheckFiles()
-
+	err := checker.CheckFiles("")
 	if err != nil {
 		log.Fatalf("Error: %s", err)
 	}
